@@ -1,9 +1,9 @@
 const express = require("express");
+const path = require("path");
 
 const app = express();
 
 app.use(express.json());
-app.use(express.static(__dirname));
 
 app.post("/api/subscribe", async (req, res) => {
     const { email } = req.body;
@@ -16,32 +16,20 @@ app.post("/api/subscribe", async (req, res) => {
     }
 
     if (!process.env.BREVO_API_KEY) {
-        console.error("BREVO_API_KEY is missing");
         return res.status(500).json({
             success: false,
-            message: "Brevo API key is not configured."
+            message: "BREVO_API_KEY is missing in Render."
         });
     }
 
     if (!process.env.BREVO_LIST_ID) {
-        console.error("BREVO_LIST_ID is missing");
         return res.status(500).json({
             success: false,
-            message: "Brevo list ID is not configured."
+            message: "BREVO_LIST_ID is missing in Render."
         });
     }
 
     try {
-        const listId = Number(process.env.BREVO_LIST_ID);
-
-        if (!Number.isInteger(listId)) {
-            console.error("Invalid BREVO_LIST_ID:", process.env.BREVO_LIST_ID);
-            return res.status(500).json({
-                success: false,
-                message: "Brevo list ID is invalid."
-            });
-        }
-
         const response = await fetch("https://api.brevo.com/v3/contacts", {
             method: "POST",
             headers: {
@@ -51,22 +39,12 @@ app.post("/api/subscribe", async (req, res) => {
             },
             body: JSON.stringify({
                 email: email,
-                listIds: [listId],
+                listIds: [Number(process.env.BREVO_LIST_ID)],
                 updateEnabled: true
             })
         });
 
-        const text = await response.text();
-
-        let data = {};
-
-        try {
-            data = text ? JSON.parse(text) : {};
-        } catch {
-            data = {
-                message: text || "Unknown response from Brevo."
-            };
-        }
+        const data = await response.json();
 
         console.log("Brevo status:", response.status);
         console.log("Brevo response:", data);
@@ -78,19 +56,25 @@ app.post("/api/subscribe", async (req, res) => {
             });
         }
 
-        return res.json({
+        return res.status(200).json({
             success: true,
             message: "You're subscribed. Thank you for joining RETURN!"
         });
 
     } catch (error) {
-        console.error("Subscription error:", error);
+        console.error("Brevo error:", error);
 
         return res.status(500).json({
             success: false,
             message: "Unable to connect to Brevo."
         });
     }
+});
+
+app.use(express.static(__dirname));
+
+app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname, "index.html"));
 });
 
 const PORT = process.env.PORT || 3000;
