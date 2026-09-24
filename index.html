@@ -298,7 +298,7 @@
 </div>
 </section>
 
-```html
+
 <section class="cta-section" id="subscribe">
     <div class="container">
         <div class="cta-content">
@@ -308,9 +308,10 @@
                 Subscribe to RETURN for updates, news, and important announcements.
             </p>
 
-            <form class="subscribe-form" action="#" method="POST">
+            <form class="subscribe-form" id="subscribeForm">
                 <input 
                     type="email" 
+                    id="subscriberEmail"
                     name="email"
                     placeholder="Enter your email address"
                     required
@@ -320,6 +321,8 @@
                     Subscribe
                 </button>
             </form>
+
+            <p class="subscribe-message" id="subscribeMessage"></p>
 
             <p class="subscribe-note">
                 You can unsubscribe at any time.
